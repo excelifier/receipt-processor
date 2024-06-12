@@ -1,63 +1,68 @@
-# PDF Processing App
+# Receipt Processing App
 
-This application processes PDF files by sending them to an Excelifier API and then fetching and saving the results as JSON files.
+The Receipt Processing App integrates with the Excelifier API to manage and analyze receipt data. With this app, you can:
+
+1. Fetch all receipts from Excelifier.
+2. Collect receipts to a file.
+3. Retrieve a breakdown of all receipts during a specified time frame.
 
 ## Configuration
 
-Create a `.env` file in the root directory (or duplicate `.env.example`) with the following variables:
+Before you start, create a `.env` file in the root directory (you can copy from `.env.example`) and populate it with the following variables:
 
 ```plaintext
 DIR_IN=./data_in
-DIR_OUT=./data_out
 BEARER_TOKEN=your_bearer_token_from_excelifier
-NOTIFY_EMAIL=optional_email_address@example.com
-PROCESS_INTERVAL=10000
+ORG_ID=your_organization_id
+API_HOST=https://api.excelifier.com (optional, defaults to this URL if not set)
+CREATED_FROM= (optional, defaults to the first day of the current month)
+CREATED_TO= (optional, defaults to the last day of the current month)
 ```
 
-## Running with node/yarn
+Note: `CREATED_FROM` and `CREATED_TO` should be in ISO 8601 date format (`yyyy-MM-dd`).
 
-Install packages:
+## Running Locally with Node/Yarn
 
-```
+### Install packages:
+```sh
 yarn
 ```
 
-Then start in dev mode:
-```
+### Start in dev mode:
+```sh
 yarn dev
 ```
 
-Or build and start:
-```
+### Build and start:
+```sh
 yarn build
 yarn start
 ```
 
-
-# Building docker image
-
-```sh
-docker build -t excelifier-batch-processer .
-```
-
-## Running docker container
+## Building Docker Image
 
 ```sh
-docker run --name excelifier-batch-processer \
-  -v ${PWD}/data_in:/app/data_in \
-  -v ${PWD}/data_out:/app/data_out \
-  -e DIR_IN=/app/data_in \
-  -e DIR_OUT=/app/data_out \
-  -e BEARER_TOKEN=your_bearer_token_from_excelifier \
-  -e PROCESS_INTERVAL=10000 \
-  excelifier-batch-processer
+docker build -t receipt-processing-app .
 ```
 
+## Running Docker Container
 
-# Building and running with `docker-compose`
-
-First, modify `docker-compose.yml` to include your Excelifier token and then
-
+```sh
+docker run --name receipt-processing-app \
+ -v ${PWD}/data_in:/app/data_in \
+ -e DIR_IN=/app/data_in \
+ -e BEARER_TOKEN=your_bearer_token_from_excelifier \
+ -e ORG_ID=your_organization_id \
+ -e API_HOST=https://api.excelifier.com \
+ -e CREATED_FROM=2023-01-01 \
+ -e CREATED_TO=2023-01-31 \
+ receipt-processing-app
 ```
+
+## Building and Running with Docker-Compose
+
+First, modify `docker-compose.yml` with your Excelifier token, organization ID, and other necessary environment variables, then run:
+
+```sh
 docker-compose up -d
 ```

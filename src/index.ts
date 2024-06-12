@@ -1,36 +1,53 @@
 import dotenv from 'dotenv';
-import processFiles from './processFiles.js';
-import processResults from './processResults.js';
 import fse from 'fs-extra';
+import fetchJobs from './fetchJobs.js';
+import getOriginalFile from './getOriginalFile.js';
+import mergeJobs from './mergeJobs.js';
+import { JobItem } from './types.js';
+
 
 // Load environment variables
 dotenv.config();
-
 const DIR_IN = process.env.DIR_IN!;
-const DIR_OUT = process.env.DIR_OUT!;
-const PROCESS_INTERVAL = process.env.PROCESS_INTERVAL ? parseInt(process.env.PROCESS_INTERVAL) : 0;
 
 const startProcessing = async () => {
-    // Make sure directories exists (and create if not)
     await fse.ensureDir(DIR_IN);
-    await fse.ensureDir(DIR_OUT);
+  
+    let receipts: JobItem[] = [];
+    
     try {
-        console.log('Starting PDF processing and results fetching...');
-        while (true) {
-            await processFiles();
-            await processResults();
-            if (PROCESS_INTERVAL > 0) {
-                console.log(`Waiting for ${PROCESS_INTERVAL / 1000} seconds...`);
-                await new Promise((resolve) => setTimeout(resolve, PROCESS_INTERVAL));
-            } else {
-                console.log(`All done (PROCESS_INTERVAL not set).`);
-                process.exit(0);
-            }
-        }
+      console.log('Starting processing receipts and results fetching...');
+      
+      const fetchedReceipts = await fetchJobs();
+      receipts = fetchedReceipts; // Store the fetched receipts in the receipts variable
+      const uuids = receipts.map(receipt => receipt.uuid);
+      console.log(uuids); // For debugging purposes
+    
+      // Download the original file for each receipt
+      const downloadPromises = receipts.map(receipt => getOriginalFile(receipt));
+    
+      // Wait for all downloads to complete
+      const downloadStatuses = await Promise.all(downloadPromises);
+      console.log(downloadStatuses); // For debugging purposes
+  
     } catch (error) {
-        console.error('An error occurred while starting the processing tasks:', error);
+      console.error('Error fetching receipts or downloading files:', error);
     }
-};
-
-// Start the processing
-startProcessing();
+    
+    try {
+      // Filter out unsuccessful jobs
+      const successfulReceipts = receipts.filter(receipt => receipt.success);
+    
+      if (successfulReceipts.length === 0) {
+        console.log('No successful jobs to process.');
+        return;
+      }
+      // Call mergeJobs with the successful receipts
+      await mergeJobs(successfulReceipts);
+    } catch (error) {
+      console.error('An error occurred while merging jobs:', error);
+    }
+  };
+  
+  // Start the processing
+  startProcessing();
