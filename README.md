@@ -6,6 +6,10 @@ The Receipt Processing App integrates with the Excelifier API to manage and anal
 2. Collect receipts to a file.
 3. Retrieve a breakdown of all receipts during a specified time frame.
 
+# Configuring Excelifier
+
+The easiest way to get the receipts to Excelifier is by using email integration: [Excelifier Email Integration](https://dev.excelifier.com/docs/category/email-integration). You can also set up email forwarding for a better experience using this guide: [Email Automatic Forwarding](https://dev.excelifier.com/docs/email/automatic-forwarding).
+
 ## Configuration
 
 Before you start, create a `.env` file in the root directory (you can copy from `.env.example`) and populate it with the following variables:
